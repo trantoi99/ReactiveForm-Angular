@@ -6,7 +6,9 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { MinSelectedCheckBoxes } from './validators/check-min-selected.validator';
+import { UserService } from './user.service';
+import { CheckExistNameValidator } from './validators/check-exist-name-validator';
+import { passwordValidator } from './validators/validate-password';
 
 @Component({
   selector: 'app-root',
@@ -23,25 +25,32 @@ export class AppComponent implements OnInit, AfterViewInit {
     { id: 2, name: 'React' },
     { id: 3, name: 'Vue' },
     { id: 4, name: 'Wordpress' },
-    { id: 5, name: 'Jquerys' },
+    { id: 5, name: 'Jquery' },
   ];
 
-  constructor(private formBuilder: FormBuilder) {}
+  constructor(
+    private formBuilder: FormBuilder,
+    private userService: UserService
+  ) {}
 
   ngOnInit(): void {
-    this.addCheckboxesToForm();
     this.form = this.formBuilder.group({
-      email: new FormControl('', [Validators.required, Validators.email]),
-      password: new FormControl('', [Validators.required]),
-      rePassword: new FormControl('', [Validators.required]),
-      listTech: new FormArray([]),
-    },{
-      validators: MinSelectedCheckBoxes('listTech',1)
+      fullName: new FormControl(
+        '',
+        [Validators.required],
+        [CheckExistNameValidator(this.userService)]
+      ),
+      password: new FormControl('', [
+        Validators.required,
+        passwordValidator(8),
+      ]),
+      listTech: this.formBuilder.array([]),
     });
+    this.addCheckboxesToForm();
   }
 
   ngAfterViewInit(): void {
-    console.log(this.form)
+    console.log(this.form);
   }
 
   // bind value to array and to use in view
@@ -51,24 +60,23 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   // add Array Fake data
   private addCheckboxesToForm() {
-    this.webData.forEach(() => this.websFormArray.push(new FormControl(false)));
+    this.webData.map(() => this.websFormArray.push(new FormControl(false)));
   }
 
-  submit(){
+  submit() {
     const selectedIds = this.form.value.listTech
-      .map((checked: any, i: number) => checked ? this.webData[i].id : null)
+      .map((checked: any, i: number) => (checked ? this.webData[i].id : null))
       .filter((v: null) => v !== null);
 
     console.log(selectedIds);
     console.log(this.form);
   }
-  
-  refresh(){
+
+  refresh() {
     this.form.reset();
   }
 
-  get errors(){
-    return this.form.controls['errors'];
+  get f() {
+    return this.form.controls;
   }
-
 }
